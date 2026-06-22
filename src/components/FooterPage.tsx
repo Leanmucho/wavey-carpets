@@ -1,65 +1,65 @@
-import React from 'react';
-import { Box, Typography, Link, Grid, IconButton } from '@mui/material';
-import { Facebook, Instagram, WhatsApp } from '@mui/icons-material';
-import { useTheme } from '@mui/system';
+import { Box, Container, Grid, IconButton, Link, Stack, Typography } from "@mui/material";
+import { Facebook, Instagram, WhatsApp } from "@mui/icons-material";
+import { retroPalette } from "../style/theme";
 
-const FooterPage: React.FC = () => {
-  const theme = useTheme();
-
+const FooterPage = () => {
   return (
     <Box
+      component="footer"
       sx={{
-        backgroundColor: "#F4D03F", // Color mostaza cálido y vintage
-        color: "#1A1A1A", // Negro suave para el texto
-        py: 4,
-        width: "100%", // Asegura que ocupe todo el ancho
-        position: "relative", // Cambio a 'relative'
-        bottom: 0, // No es necesario en este caso
-        left: 0,
-        mt: 4, // Añadimos margen superior para que se separe un poco del contenido
+        bgcolor: retroPalette.ink,
+        color: retroPalette.paper,
+        borderTop: `5px solid ${retroPalette.red}`,
+        py: 5,
       }}
     >
-      <Grid container spacing={4} justifyContent="center">
-        {/* Contacto y Redes */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Typography variant="h6" sx={{ color: "#4F772D" }}>Contacto</Typography>
-          <Typography>
-            <Link href="mailto:contacto@wavycarpets.com" color="inherit">contacto@wavycarpets.com</Link>
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <IconButton color="inherit" href="https://www.instagram.com" target="_blank">
-              <Instagram />
-            </IconButton>
-            <IconButton color="inherit" href="https://www.facebook.com" target="_blank">
-              <Facebook />
-            </IconButton>
-            <IconButton color="inherit" href="https://wa.me/1234567890" target="_blank">
-              <WhatsApp />
-            </IconButton>
-          </Box>
+      <Container maxWidth="lg">
+        <Grid container spacing={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Typography variant="h5" sx={{ color: retroPalette.mustard }} gutterBottom>
+              Wavy Carpets
+            </Typography>
+            <Typography>
+              Alfombras tufting con estetica vintage, callejera y hecha a mano.
+            </Typography>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Typography variant="h6" sx={{ color: retroPalette.mustard }}>
+              Contacto
+            </Typography>
+            <Typography>
+              <Link href="mailto:contacto@wavycarpets.com" color="inherit">
+                contacto@wavycarpets.com
+              </Link>
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+              <IconButton color="inherit" href="https://www.instagram.com" target="_blank">
+                <Instagram />
+              </IconButton>
+              <IconButton color="inherit" href="https://www.facebook.com" target="_blank">
+                <Facebook />
+              </IconButton>
+              <IconButton color="inherit" href="https://wa.me/1234567890" target="_blank">
+                <WhatsApp />
+              </IconButton>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Typography variant="h6" sx={{ color: retroPalette.mustard }}>
+              Taller
+            </Typography>
+            <Typography>Lunes a viernes: 9 a 18 hs</Typography>
+            <Typography>Sabado: 10 a 14 hs</Typography>
+            <Typography>Bariloche, Argentina</Typography>
+          </Grid>
         </Grid>
 
-        {/* Horarios */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Typography variant="h6" sx={{ color: "#4F772D" }}>Horarios de Atención</Typography>
-          <Typography>Lunes a Viernes: 9:00 AM - 6:00 PM</Typography>
-          <Typography>Sábado: 10:00 AM - 2:00 PM</Typography>
-          <Typography>Domingo: Cerrado</Typography>
-        </Grid>
-
-        {/* Ubicación */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Typography variant="h6" sx={{ color: "#4F772D" }}>Nuestra Ubicación</Typography>
-          <Typography>Av. Principal 123, Ciudad XYZ</Typography>
-        </Grid>
-      </Grid>
-
-      {/* Copyright */}
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
-        <Typography variant="body2" sx={{ color: "#1A1A1A" }}>
-          &copy; {new Date().getFullYear()} Wavy Carpets. Todos los derechos reservados.
+        <Typography variant="body2" sx={{ mt: 4, color: "rgba(255,248,236,0.75)" }}>
+          © {new Date().getFullYear()} Wavy Carpets. Todos los derechos reservados.
         </Typography>
-      </Box>
+      </Container>
     </Box>
   );
 };

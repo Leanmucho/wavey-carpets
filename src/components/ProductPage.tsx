@@ -1,65 +1,62 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState } from "react";
 import {
   Box,
-  Typography,
-  Grid,
   Button,
   CardMedia,
-  Stack,
   Chip,
-  Rating,
-  useTheme,
-  Divider,
   CircularProgress,
-} from '@mui/material';
-import { useCart } from '../context/CartContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // Importando la configuración de Firebase
+  Divider,
+  Grid,
+  Rating,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { doc, getDoc } from "firebase/firestore";
+import { useNavigate, useParams } from "react-router-dom";
+import { db } from "../firebaseConfig";
+import { products as fallbackProducts } from "../data/products";
+import { useCart } from "../context/useCart";
+import type { Product } from "../types";
+import { retroPalette } from "../style/theme";
+import { normalizeProduct } from "../utils/productMapper";
 
 const ProductPage = () => {
   const { id } = useParams();
-  const theme = useTheme();
+  const navigate = useNavigate();
   const { addItemToCart } = useCart();
-
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!id) {
+        setProduct(null);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const docRef = doc(db, 'products', id!); // Referencia al documento de Firestore
+        const docRef = doc(db, "products", id);
         const docSnap = await getDoc(docRef);
+
         if (docSnap.exists()) {
-          setProduct(docSnap.data());
+          setProduct(normalizeProduct(docSnap.id, docSnap.data()));
         } else {
-          setProduct(null);
+          setProduct(fallbackProducts.find((item) => item.id === id) ?? null);
         }
-      } catch (error) {
-        console.error('Error al obtener el producto:', error);
+      } catch {
+        setProduct(fallbackProducts.find((item) => item.id === id) ?? null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    void fetchProduct();
   }, [id]);
-
-  const handleAddToCart = () => {
-    if (!product) return;
-
-    const newItem = {
-      id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-    };
-    addItemToCart(newItem);
-  };
 
   if (loading) {
     return (
-      <Box sx={{ pt: 20, textAlign: 'center' }}>
+      <Box sx={{ minHeight: "70vh", pt: 20, textAlign: "center" }}>
         <CircularProgress />
       </Box>
     );
@@ -67,104 +64,111 @@ const ProductPage = () => {
 
   if (!product) {
     return (
-      <Box sx={{ pt: 20, textAlign: 'center' }}>
+      <Box sx={{ minHeight: "70vh", pt: 20, textAlign: "center", px: 2 }}>
         <Typography variant="h4">Producto no encontrado</Typography>
+        <Button sx={{ mt: 3 }} variant="contained" onClick={() => navigate("/shop")}>
+          Volver a productos
+        </Button>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ backgroundColor: theme.palette.background.default, color: theme.palette.text.primary, minHeight: '100vh', pt: { xs: 16, md: 20 }, pb: 10, px: { xs: 2, md: 6 } }}>
-      <Grid container spacing={6} justifyContent="center">
-        <Grid item xs={12} md={6}>
-          <CardMedia component="img" image={product.image} alt={product.name} sx={{ width: '100%', height: 500, objectFit: 'cover', borderRadius: 4, boxShadow: 4 }} />
+    <Box
+      component="main"
+      sx={{
+        minHeight: "100vh",
+        pt: { xs: 14, md: 17 },
+        pb: 10,
+        px: { xs: 2, md: 6 },
+      }}
+    >
+      <Grid container spacing={6} justifyContent="center" alignItems="center">
+        <Grid size={{ xs: 12, md: 6 }}>
+          <CardMedia
+            component="img"
+            image={product.image}
+            alt={product.name}
+            sx={{
+              width: "100%",
+              height: { xs: 360, md: 560 },
+              objectFit: "cover",
+              border: `3px solid ${retroPalette.border}`,
+              boxShadow: "10px 10px 0 rgba(25,23,20,0.22)",
+            }}
+          />
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-            {product.name}
-          </Typography>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Stack spacing={2.5}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {product.isNew && <Chip label="Nuevo" color="secondary" />}
+              {product.isSale && <Chip label="Sale" color="primary" />}
+              {product.tags?.map((tag) => (
+                <Chip key={tag} label={tag} variant="outlined" />
+              ))}
+            </Stack>
 
-          <Typography variant="body1" sx={{ mb: 3 }}>
-            {product.description}
-          </Typography>
-
-          <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-            <Rating value={product.rating || 0} readOnly precision={0.5} />
-            <Typography variant="body2">({product.rating || 0})</Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-            <Typography variant="h4" sx={{ color: theme.palette.secondary.main }}>
-              ${product.price?.toFixed(2)}
+            <Typography
+              variant="h2"
+              component="h1"
+              sx={{
+                fontFamily: "'Archivo Black', 'Work Sans', sans-serif",
+                lineHeight: 0.95,
+              }}
+            >
+              {product.name}
             </Typography>
-            {product.oldPrice && (
-              <>
-                <Typography variant="body1" sx={{ textDecoration: 'line-through', color: 'gray' }}>
-                  ${product.oldPrice?.toFixed(2)}
+
+            <Typography variant="h6" color="text.secondary">
+              {product.description}
+            </Typography>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Rating value={product.rating} readOnly precision={0.5} />
+              <Typography variant="body2">({product.rating})</Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Typography variant="h3" sx={{ color: retroPalette.olive }}>
+                ${product.price.toFixed(2)}
+              </Typography>
+              {product.oldPrice && (
+                <Typography variant="h6" sx={{ textDecoration: "line-through" }}>
+                  ${product.oldPrice.toFixed(2)}
                 </Typography>
-                <Chip label={`-${Math.round((1 - product.price / product.oldPrice) * 100)}%`} size="small" sx={{ bgcolor: theme.palette.primary.main, color: 'white' }} />
-              </>
-            )}
+              )}
+            </Stack>
+
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => addItemToCart(product)}
+              sx={{ width: { xs: "100%", sm: "fit-content" } }}
+            >
+              Agregar al carrito
+            </Button>
+
+            <Divider />
+
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                Especificaciones
+              </Typography>
+              <Typography>Material: {product.materials.join(", ")}</Typography>
+              <Typography>Tamano: {product.size ?? "120x180 cm"}</Typography>
+              <Typography>Origen: {product.origin ?? "Hecho en Argentina"}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                Envios y devoluciones
+              </Typography>
+              <Typography color="text.secondary">
+                Envios a todo el pais en 3 a 7 dias habiles. Cambios dentro de los 10 dias posteriores a la recepcion.
+              </Typography>
+            </Box>
           </Stack>
-
-          <Button
-            variant="contained"
-            size="large"
-            sx={{
-              mt: 2,
-              borderRadius: 3,
-              backgroundColor: theme.palette.primary.main,
-              color: 'white',
-              px: 4,
-              py: 1.5,
-              textTransform: 'none',
-              fontSize: '1rem',
-              boxShadow: 3,
-              '&:hover': {
-                backgroundColor: theme.palette.primary.dark,
-              },
-            }}
-            onClick={handleAddToCart}
-          >
-            Añadir al carrito
-          </Button>
-
-          {/* Especificaciones */}
-          <Divider sx={{ my: 4 }} />
-          <Typography variant="h6" gutterBottom>
-            Especificaciones
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 1 }}>Material: {product.material || 'Algodón reciclado'}</Typography>
-          <Typography variant="body2" sx={{ mb: 1 }}>Tamaño: {product.size || '120x180 cm'}</Typography>
-          <Typography variant="body2" sx={{ mb: 1 }}>Origen: {product.origin || 'Hecho en Argentina'}</Typography>
-
-          {/* Etiquetas */}
-          {product.tags?.length > 0 && (
-            <>
-              <Divider sx={{ my: 4 }} />
-              <Typography variant="h6" gutterBottom>Etiquetas</Typography>
-              <Stack direction="row" spacing={1} mb={3}>
-                {product.tags.map((tag: string, idx: number) => (
-                  <Chip
-                    key={idx}
-                    label={tag}
-                    variant="outlined"
-                    sx={{ borderColor: theme.palette.secondary.main, color: theme.palette.secondary.main }}
-                  />
-                ))}
-              </Stack>
-            </>
-          )}
-
-          {/* Info adicional */}
-          <Divider sx={{ my: 4 }} />
-          <Typography variant="h6" gutterBottom>
-            Envíos y devoluciones
-          </Typography>
-          <Typography variant="body2">
-            Envíos a todo el país en 3 a 7 días hábiles. Cambios sin costo dentro de los 10 días posteriores a la recepción.
-          </Typography>
         </Grid>
       </Grid>
     </Box>

@@ -1,13 +1,15 @@
-import { Box, Typography, Button } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { ArrowForward, AutoAwesome, Skateboarding } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/wavyCarpetPNG.png";
-import { useEffect, useState } from "react";
+import { retroPalette } from "../style/theme";
 
-// Puedes reemplazar estas rutas con imágenes reales de tu proyecto
 const images = [
   "/assets/banner1.jpg",
   "/assets/banner2.jpg",
-  "/assets/banner3.jpg"
+  "/assets/banner3.jpg",
+  "/assets/banner4.jpg",
 ];
 
 const Home = () => {
@@ -15,92 +17,112 @@ const Home = () => {
   const [currentImage, setCurrentImage] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
     }, 5000);
-    return () => clearInterval(interval);
+
+    return () => window.clearInterval(interval);
   }, []);
 
   return (
     <Box
+      component="main"
       sx={{
         position: "relative",
-        height: "100vh",
-        width: "100%",
+        minHeight: "100vh",
         overflow: "hidden",
-        backgroundColor: "#F0E6D2"
+        pt: { xs: 12, md: 14 },
+        display: "flex",
+        alignItems: "center",
+        bgcolor: retroPalette.cream,
       }}
     >
-      {/* Carrusel */}
       <Box
         sx={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          height: "100%",
-          width: "100%",
-          backgroundImage: `url(${images[currentImage]})`,
+          inset: 0,
+          backgroundImage: `linear-gradient(90deg, rgba(239,228,208,0.96) 0%, rgba(239,228,208,0.82) 46%, rgba(25,23,20,0.32) 100%), url(${images[currentImage]})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          transition: "background-image 1s ease-in-out",
-          filter: "brightness(0.5)",
-          zIndex: 1,
+          transition: "background-image 700ms ease",
         }}
       />
 
-      {/* Overlay con contenido centrado */}
       <Box
         sx={{
+          position: "absolute",
+          right: { xs: -70, md: 80 },
+          bottom: { xs: 40, md: 90 },
+          width: { xs: 260, md: 420 },
+          height: { xs: 72, md: 110 },
+          bgcolor: retroPalette.red,
+          border: `3px solid ${retroPalette.border}`,
+          transform: "rotate(-8deg)",
+          boxShadow: "12px 12px 0 rgba(25,23,20,0.22)",
+        }}
+      />
+
+      <Stack
+        spacing={3}
+        sx={{
           position: "relative",
-          zIndex: 2,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-          px: 3,
+          zIndex: 1,
+          width: "min(760px, calc(100% - 32px))",
+          ml: { xs: 2, md: 8 },
+          mb: { xs: 4, md: 0 },
         }}
       >
-        <img
-          src={logo}
-          alt="Wavy Carpets Logo"
-          style={{ height: "120px", marginBottom: "20px" }}
-        />
+        <Box component="img" src={logo} alt="Wavy Carpets" sx={{ width: 156 }} />
+
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Chip icon={<Skateboarding />} label="Tufting handmade" color="primary" />
+          <Chip icon={<AutoAwesome />} label="Retro street" sx={{ bgcolor: retroPalette.mustard }} />
+        </Stack>
+
         <Typography
-          variant="h3"
-          sx={{ color: "#FFD166", fontWeight: 700, mb: 2 }}
-        >
-          ¡Bienvenido a Wavy Carpets!
-        </Typography>
-        <Typography
-          variant="h6"
-          sx={{ color: "#FFFFFF", mb: 4, maxWidth: 600 }}
-        >
-          Alfombras únicas con un estilo irreverente, vintage y callejero.
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={() => navigate("/shop")}
+          variant="h1"
           sx={{
-            backgroundColor: "#D62246",
-            color: "#FFF",
-            px: 4,
-            py: 1.5,
-            fontSize: "1rem",
-            fontWeight: 600,
-            borderRadius: "30px",
-            "&:hover": {
-              backgroundColor: "#B81C3A",
-            },
+            fontFamily: "'Archivo Black', 'Work Sans', sans-serif",
+            fontSize: { xs: "3rem", sm: "4.8rem", md: "6.4rem" },
+            lineHeight: 0.88,
+            maxWidth: 760,
           }}
         >
-          Ver Productos
-        </Button>
-      </Box>
+          Alfombras con alma de skate viejo
+        </Typography>
+
+        <Typography
+          variant="h5"
+          sx={{
+            maxWidth: 570,
+            color: retroPalette.mutedInk,
+            fontWeight: 700,
+          }}
+        >
+          Piezas tufting con base crema, rojo fuerte, textura artesanal y una vibra vintage que no pide permiso.
+        </Typography>
+
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <Button
+            variant="contained"
+            size="large"
+            endIcon={<ArrowForward />}
+            onClick={() => navigate("/shop")}
+          >
+            Ver productos
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => navigate("/colecciones")}
+            sx={{ bgcolor: retroPalette.paper }}
+          >
+            Colecciones
+          </Button>
+        </Stack>
+      </Stack>
     </Box>
   );
 };
 
 export default Home;
-

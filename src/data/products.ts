@@ -1,79 +1,96 @@
-export interface Product {
-  id: number;
-  name: string;
-  image: string;
-  price: number;
-  oldPrice?: number;
-  rating: number;
-  isNew?: boolean;
-  isSale?: boolean;
-  colors: string[];
-  materials: string[];
-}
+import type { Product } from "../types";
+import detalles from "../assets/detalles.jpg";
+import enStock from "../assets/en-stock.jpg";
+import patagonia from "../assets/patagonia.jpg";
+import personalizadas from "../assets/personalizadas.jpg";
 
 export const products: Product[] = [
   {
-    id: 1,
-    name: "Alfombra Persiana Vintage",
-    image: "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?ixlib=rb-4.0.3",
+    id: "1",
+    name: "Alfombra Skater Wave",
+    image: personalizadas,
+    description: "Base crema, curvas rojas y vibra de tabla gastada para livings con actitud.",
     price: 349,
     oldPrice: 499,
     rating: 4.7,
     isNew: true,
     isSale: true,
-    colors: ["#D62246", "#1A1A1A", "#F0E6D2"],
-    materials: ["Lana", "Algodón"],
+    colors: ["#D62246", "#191714", "#EFE4D0"],
+    materials: ["Lana", "Algodon"],
+    tags: ["Retro", "Skater", "Tufting"],
+    size: "120x180 cm",
+    origin: "Hecho en Argentina",
   },
   {
-    id: 2,
-    name: "Alfombra Boho Chic",
-    image: "https://images.unsplash.com/photo-1579639782539-15cc6c0be63f?ixlib=rb-4.0.3",
+    id: "2",
+    name: "Alfombra Urban Graffiti",
+    image: enStock,
+    description: "Textura suave, color callejero y una presencia fuerte sin perder calidez.",
     price: 279,
     rating: 4.3,
     isNew: false,
-    colors: ["#4F772D", "#FFD166", "#FFFFFF"],
-    materials: ["Algodón Orgánico"],
+    colors: ["#4F772D", "#E5B83E", "#FFF8EC"],
+    materials: ["Algodon organico"],
+    tags: ["Urbana", "Handmade"],
+    size: "100x150 cm",
+    origin: "Hecho en Argentina",
   },
   {
-    id: 3,
-    name: "Alfombra Étnica Tribal",
-    image: "https://images.unsplash.com/photo-1593627365173-01c0be84a3ae?ixlib=rb-4.0.3",
+    id: "3",
+    name: "Alfombra Street Classic",
+    image: detalles,
+    description: "Patron tribal con contraste de tinta negra y rojo vintage.",
     price: 399,
     oldPrice: 459,
     rating: 4.9,
     isNew: true,
     isSale: true,
-    colors: ["#FFD166", "#F0E6D2", "#1A1A1A"],
+    colors: ["#E5B83E", "#EFE4D0", "#191714"],
     materials: ["Lana", "Yute"],
+    tags: ["Edicion limitada", "Vintage"],
+    size: "140x200 cm",
+    origin: "Hecho en Argentina",
   },
   {
-    id: 4,
-    name: "Alfombra Escandinava Moderna",
-    image: "https://images.unsplash.com/photo-1616486029642-9741a4eec6f2?ixlib=rb-4.0.3",
+    id: "4",
+    name: "Alfombra Bowl Session",
+    image: patagonia,
+    description: "Geometria simple, crema suave y verdes gastados como grafica de skate vieja.",
     price: 315,
     rating: 4.2,
-    colors: ["#F0E6D2", "#4F772D"],
-    materials: ["Poliéster", "Algodón"],
+    colors: ["#EFE4D0", "#4F772D"],
+    materials: ["Poliester", "Algodon"],
+    tags: ["Minimal", "Retro"],
+    size: "120x170 cm",
+    origin: "Hecho en Argentina",
   },
   {
-    id: 5,
-    name: "Alfombra Minimal Japonesa",
-    image: "https://images.unsplash.com/photo-1618220023734-60d43c71c8b2?ixlib=rb-4.0.3",
+    id: "5",
+    name: "Alfombra Garage Pop",
+    image: personalizadas,
+    description: "Una pieza luminosa con detalles rojos para cortar espacios neutros.",
     price: 289,
     rating: 4.5,
     isNew: true,
-    colors: ["#FFFFFF", "#D62246"],
-    materials: ["Bambú", "Algodón Orgánico"],
+    colors: ["#FFF8EC", "#D62246"],
+    materials: ["Bambu", "Algodon organico"],
+    tags: ["Pop", "Custom"],
+    size: "90x140 cm",
+    origin: "Hecho en Argentina",
   },
   {
-    id: 6,
-    name: "Alfombra Retro 70s",
-    image: "https://images.unsplash.com/photo-1618220432221-f18f3483e6b2?ixlib=rb-4.0.3",
+    id: "6",
+    name: "Alfombra 70s Deck",
+    image: enStock,
+    description: "Rojo, mostaza y negro con energia de grafica setentosa.",
     price: 219,
-    rating: 4.0,
     isSale: true,
     oldPrice: 299,
-    colors: ["#D62246", "#FFD166", "#1A1A1A"],
-    materials: ["Lana", "Poliéster"],
-  }
+    rating: 4.0,
+    colors: ["#D62246", "#E5B83E", "#191714"],
+    materials: ["Lana", "Poliester"],
+    tags: ["Sale", "Street"],
+    size: "80x120 cm",
+    origin: "Hecho en Argentina",
+  },
 ];

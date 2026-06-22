@@ -1,9 +1,33 @@
-/* index.css o App.css */
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Work+Sans:wght@500;700;900&display=swap");
+
 html,
 body,
 #root {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow-x: hidden;
+  margin: 0;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: "Work Sans", "Trebuchet MS", Arial, sans-serif;
+  background:
+    linear-gradient(rgba(25, 23, 20, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(25, 23, 20, 0.035) 1px, transparent 1px),
+    #efe4d0;
+  background-size: 26px 26px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
 }
