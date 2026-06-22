@@ -8,8 +8,12 @@ import {
   CardMedia,
   Container,
   Divider,
+  FormControl,
   Grid,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -22,14 +26,33 @@ import { useCart } from "../context/useCart";
 import type { CartItem } from "../types";
 import { retroPalette } from "../style/theme";
 
+const STORE_EMAIL = "contacto@wavycarpets.com";
 const WHATSAPP_PHONE = "1234567890";
+
+const shippingLabels = {
+  home: "Envio a domicilio",
+  pickup: "Retiro / coordinar",
+  quote: "Cotizar envio especial",
+} as const;
+
+const contactLabels = {
+  whatsapp: "WhatsApp",
+  email: "Email",
+  both: "Email y WhatsApp",
+} as const;
 
 const initialForm = {
   name: "",
   email: "",
   phone: "",
+  notificationEmail: "",
+  notificationPhone: "",
+  preferredContact: "whatsapp" as keyof typeof contactLabels,
+  shippingMethod: "home" as keyof typeof shippingLabels,
   address: "",
   city: "",
+  province: "",
+  postalCode: "",
   notes: "",
 };
 
@@ -41,6 +64,7 @@ interface OrderSnapshot {
   items: CartItem[];
   total: number;
   whatsappUrl: string;
+  emailUrl: string;
 }
 
 const money = new Intl.NumberFormat("es-AR", {
@@ -49,7 +73,13 @@ const money = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0,
 });
 
-const buildWhatsAppMessage = (
+const getContactEmail = (customer: CheckoutForm) =>
+  customer.notificationEmail.trim() || customer.email.trim();
+
+const getContactPhone = (customer: CheckoutForm) =>
+  customer.notificationPhone.trim() || customer.phone.trim();
+
+const buildOrderDetail = (
   customer: CheckoutForm,
   items: CartItem[],
   total: number,
@@ -63,16 +93,29 @@ const buildWhatsAppMessage = (
     .join("\n");
 
   return [
-    "Hola Wavy Carpets, quiero confirmar este pedido:",
+    "Detalle del pedido Wavy Carpets",
     orderId ? `Pedido: ${orderId}` : "",
+    "",
+    "Productos:",
     productLines,
     `Total: ${money.format(total)}`,
     "",
+    "Cliente:",
     `Nombre: ${customer.name}`,
     `Email: ${customer.email}`,
     `Telefono: ${customer.phone}`,
+    "",
+    "Avisos del pedido:",
+    `Email para avisos: ${getContactEmail(customer)}`,
+    `Numero para avisos: ${getContactPhone(customer)}`,
+    `Canal preferido: ${contactLabels[customer.preferredContact]}`,
+    "",
+    "Envio:",
+    `Metodo: ${shippingLabels[customer.shippingMethod]}`,
     `Direccion: ${customer.address}`,
     `Ciudad: ${customer.city}`,
+    `Provincia: ${customer.province}`,
+    `Codigo postal: ${customer.postalCode}`,
     customer.notes ? `Notas: ${customer.notes}` : "",
   ]
     .filter(Boolean)
@@ -86,8 +129,23 @@ const buildWhatsAppUrl = (
   orderId?: string
 ) =>
   `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(
-    buildWhatsAppMessage(customer, items, total, orderId)
+    `Hola Wavy Carpets, quiero confirmar este pedido:\n\n${buildOrderDetail(
+      customer,
+      items,
+      total,
+      orderId
+    )}`
   )}`;
+
+const buildEmailUrl = (
+  customer: CheckoutForm,
+  items: CartItem[],
+  total: number,
+  orderId?: string
+) =>
+  `mailto:${getContactEmail(customer) || STORE_EMAIL}?subject=${encodeURIComponent(
+    `Detalle de tu pedido Wavy Carpets${orderId ? ` #${orderId}` : ""}`
+  )}&body=${encodeURIComponent(buildOrderDetail(customer, items, total, orderId))}`;
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -103,6 +161,10 @@ const Checkout = () => {
     () => buildWhatsAppUrl(form, cartItems, total),
     [cartItems, form, total]
   );
+  const emailUrl = useMemo(
+    () => buildEmailUrl(form, cartItems, total),
+    [cartItems, form, total]
+  );
 
   const updateField = (field: keyof CheckoutForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -113,8 +175,16 @@ const Checkout = () => {
     if (!form.name.trim()) return "Completa tu nombre.";
     if (!form.email.trim()) return "Completa tu email.";
     if (!form.phone.trim()) return "Completa tu telefono.";
-    if (!form.address.trim()) return "Completa tu direccion.";
+    if (!getContactEmail(form)) return "Completa un email para avisos.";
+    if (!getContactPhone(form)) return "Completa un numero para avisos.";
+    if (form.shippingMethod !== "pickup" && !form.address.trim()) {
+      return "Completa tu direccion de envio.";
+    }
     if (!form.city.trim()) return "Completa tu ciudad.";
+    if (!form.province.trim()) return "Completa tu provincia.";
+    if (form.shippingMethod !== "pickup" && !form.postalCode.trim()) {
+      return "Completa tu codigo postal.";
+    }
     return "";
   };
 
@@ -144,13 +214,27 @@ const Checkout = () => {
           name: form.name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
+          notes: form.notes.trim(),
+        },
+        notifications: {
+          email: getContactEmail(form),
+          phone: getContactPhone(form),
+          preferredContact: form.preferredContact,
+          preferredContactLabel: contactLabels[form.preferredContact],
+        },
+        shipping: {
+          method: form.shippingMethod,
+          methodLabel: shippingLabels[form.shippingMethod],
           address: form.address.trim(),
           city: form.city.trim(),
-          notes: form.notes.trim(),
+          province: form.province.trim(),
+          postalCode: form.postalCode.trim(),
         },
         items: orderItems,
         total,
-        status: "pending",
+        paymentStatus: "pending",
+        shippingStatus: "pending",
+        status: "pending_payment",
         source: "web-checkout",
         userId: user?.uid ?? null,
         createdAt: serverTimestamp(),
@@ -162,11 +246,12 @@ const Checkout = () => {
         items: cartItems,
         total,
         whatsappUrl: buildWhatsAppUrl(form, cartItems, total, orderRef.id),
+        emailUrl: buildEmailUrl(form, cartItems, total, orderRef.id),
       });
       clearCart();
     } catch {
       setError(
-        "No pudimos guardar el pedido en Firebase. Podes enviarlo por WhatsApp con el boton de abajo."
+        "No pudimos guardar el pedido en Firebase. Podes enviarlo por WhatsApp o email con los botones de abajo."
       );
     } finally {
       setSaving(false);
@@ -191,12 +276,25 @@ const Checkout = () => {
                 Pedido recibido
               </Typography>
               <Alert severity="success">
-                Guardamos tu pedido {order.id ? `#${order.id}` : ""}. Te recomendamos enviarlo por WhatsApp para coordinar pago y envio.
+                Guardamos tu pedido {order.id ? `#${order.id}` : ""}. El detalle queda listo para avisarle al cliente cuando se confirme el pago.
               </Alert>
-              <Typography variant="h5">Total: {money.format(order.total)}</Typography>
-              <Button variant="contained" href={order.whatsappUrl} target="_blank">
-                Enviar por WhatsApp
-              </Button>
+              <Box>
+                <Typography variant="h5">Total: {money.format(order.total)}</Typography>
+                <Typography color="text.secondary">
+                  Avisos a: {getContactEmail(order.customer)} / {getContactPhone(order.customer)}
+                </Typography>
+                <Typography color="text.secondary">
+                  Envio: {shippingLabels[order.customer.shippingMethod]}
+                </Typography>
+              </Box>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <Button variant="contained" href={order.whatsappUrl} target="_blank">
+                  Enviar por WhatsApp
+                </Button>
+                <Button variant="outlined" href={order.emailUrl} sx={{ bgcolor: retroPalette.paper }}>
+                  Abrir email al cliente
+                </Button>
+              </Stack>
               <Button variant="outlined" onClick={() => navigate("/shop")}>
                 Volver a productos
               </Button>
@@ -215,7 +313,7 @@ const Checkout = () => {
             Checkout
           </Typography>
           <Typography color="text.secondary">
-            Revisa tu pedido y dejanos tus datos para coordinar pago, envio y detalles finales.
+            Revisa tu pedido y dejanos los datos de envio y contacto para pasar el detalle cuando el pago este confirmado.
           </Typography>
         </Stack>
 
@@ -232,8 +330,13 @@ const Checkout = () => {
                 boxShadow: "8px 8px 0 rgba(25,23,20,0.2)",
               }}
             >
-              <Stack spacing={2.5}>
-                <Typography variant="h4">Datos de entrega</Typography>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography variant="h4">Datos del cliente</Typography>
+                  <Typography color="text.secondary">
+                    Datos base para identificar el pedido.
+                  </Typography>
+                </Box>
                 {error && <Alert severity="warning">{error}</Alert>}
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -253,12 +356,93 @@ const Checkout = () => {
                       onChange={(event) => updateField("email", event.target.value)}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       label="Telefono"
                       fullWidth
                       value={form.phone}
                       onChange={(event) => updateField("phone", event.target.value)}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Divider />
+
+                <Box>
+                  <Typography variant="h4">Avisos del pedido</Typography>
+                  <Typography color="text.secondary">
+                    Email y numero donde se le pasaran los detalles despues del pago o confirmacion.
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="Email para recibir detalles"
+                      type="email"
+                      fullWidth
+                      value={form.notificationEmail}
+                      onChange={(event) => updateField("notificationEmail", event.target.value)}
+                      placeholder={form.email || "cliente@email.com"}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="Numero para recibir detalles"
+                      fullWidth
+                      value={form.notificationPhone}
+                      onChange={(event) => updateField("notificationPhone", event.target.value)}
+                      placeholder={form.phone || "WhatsApp del cliente"}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Canal preferido</InputLabel>
+                      <Select
+                        label="Canal preferido"
+                        value={form.preferredContact}
+                        onChange={(event) => updateField("preferredContact", event.target.value)}
+                      >
+                        {Object.entries(contactLabels).map(([value, label]) => (
+                          <MenuItem key={value} value={value}>
+                            {label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+
+                <Divider />
+
+                <Box>
+                  <Typography variant="h4">Envio</Typography>
+                  <Typography color="text.secondary">
+                    Datos para preparar el despacho del producto.
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Metodo de envio</InputLabel>
+                      <Select
+                        label="Metodo de envio"
+                        value={form.shippingMethod}
+                        onChange={(event) => updateField("shippingMethod", event.target.value)}
+                      >
+                        {Object.entries(shippingLabels).map(([value, label]) => (
+                          <MenuItem key={value} value={value}>
+                            {label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      label="Direccion"
+                      fullWidth
+                      value={form.address}
+                      onChange={(event) => updateField("address", event.target.value)}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -269,17 +453,25 @@ const Checkout = () => {
                       onChange={(event) => updateField("city", event.target.value)}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
-                      label="Direccion"
+                      label="Provincia"
                       fullWidth
-                      value={form.address}
-                      onChange={(event) => updateField("address", event.target.value)}
+                      value={form.province}
+                      onChange={(event) => updateField("province", event.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="Codigo postal"
+                      fullWidth
+                      value={form.postalCode}
+                      onChange={(event) => updateField("postalCode", event.target.value)}
                     />
                   </Grid>
                   <Grid size={{ xs: 12 }}>
                     <TextField
-                      label="Notas"
+                      label="Notas de entrega"
                       fullWidth
                       multiline
                       minRows={3}
@@ -301,6 +493,14 @@ const Checkout = () => {
                     disabled={cartItems.length === 0}
                   >
                     Enviar por WhatsApp
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    href={emailUrl}
+                    sx={{ bgcolor: retroPalette.paper }}
+                    disabled={cartItems.length === 0}
+                  >
+                    Abrir email
                   </Button>
                 </Stack>
               </Stack>
@@ -356,6 +556,16 @@ const Checkout = () => {
                       <Typography variant="h5">Total</Typography>
                       <Typography variant="h5" sx={{ color: retroPalette.olive }}>
                         {money.format(total)}
+                      </Typography>
+                    </Stack>
+                    <Divider />
+                    <Stack spacing={1}>
+                      <Typography variant="h6">Se guardara</Typography>
+                      <Typography color="text.secondary">
+                        Contacto: {getContactEmail(form) || "email del cliente"} / {getContactPhone(form) || "telefono del cliente"}
+                      </Typography>
+                      <Typography color="text.secondary">
+                        Envio: {shippingLabels[form.shippingMethod]}
                       </Typography>
                     </Stack>
                   </>
