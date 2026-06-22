@@ -6,10 +6,10 @@ import logo from "../assets/wavyCarpetPNG.png";
 import { retroPalette } from "../style/theme";
 
 const images = [
-  "/assets/banner1.jpg",
-  "/assets/banner2.jpg",
-  "/assets/banner3.jpg",
-  "/assets/banner4.jpg",
+  `${import.meta.env.BASE_URL}assets/banner1.jpg`,
+  `${import.meta.env.BASE_URL}assets/banner2.jpg`,
+  `${import.meta.env.BASE_URL}assets/banner3.jpg`,
+  `${import.meta.env.BASE_URL}assets/banner4.jpg`,
 ];
 
 const Home = () => {
