@@ -112,6 +112,14 @@ const Home = () => {
             Ver productos
           </Button>
           <Button
+            variant="contained"
+            size="large"
+            onClick={() => navigate("/personalizada")}
+            sx={{ bgcolor: retroPalette.olive, "&:hover": { bgcolor: retroPalette.olive } }}
+          >
+            Personalizar
+          </Button>
+          <Button
             variant="outlined"
             size="large"
             onClick={() => navigate("/colecciones")}

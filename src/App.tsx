@@ -14,6 +14,7 @@ import Carrito from "./components/Carrito";
 import FooterPage from "./components/FooterPage";
 import AdminProducts from "./components/AdminProducts";
 import Checkout from "./components/Checkout";
+import CustomOrder from "./components/CustomOrder";
 import "./App.css";
 
 const SimplePage = ({
@@ -77,6 +78,7 @@ function App() {
           <Route path="/carrito" element={<Carrito />} />
           <Route path="/admin" element={<AdminProducts />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/personalizada" element={<CustomOrder />} />
           <Route
             path="/mi-cuenta"
             element={
