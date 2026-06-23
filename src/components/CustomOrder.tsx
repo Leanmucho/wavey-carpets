@@ -20,6 +20,7 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { db, storage } from "../firebaseConfig";
 import { retroPalette } from "../style/theme";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 const WHATSAPP_PHONE = "1234567890";
 
@@ -178,9 +179,10 @@ const CustomOrder = () => {
       setWhatsappUrl(buildWhatsAppUrl(form, imageUrl, requestRef.id));
       setForm(initialForm);
       setFile(null);
-    } catch {
+    } catch (submitError) {
+      console.error(submitError);
       setError(
-        "No pudimos guardar la solicitud en Firebase. Podes mandarla por WhatsApp y adjuntar la imagen manualmente."
+        `${getFirebaseErrorMessage(submitError)} Podes mandarla por WhatsApp y adjuntar la imagen manualmente.`
       );
       setWhatsappUrl(buildWhatsAppUrl(form));
     } finally {

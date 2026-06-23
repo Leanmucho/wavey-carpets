@@ -25,6 +25,7 @@ import { useAuth } from "../context/useAuth";
 import { useCart } from "../context/useCart";
 import type { CartItem } from "../types";
 import { retroPalette } from "../style/theme";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 const STORE_EMAIL = "contacto@wavycarpets.com";
 const WHATSAPP_PHONE = "1234567890";
@@ -249,9 +250,10 @@ const Checkout = () => {
         emailUrl: buildEmailUrl(form, cartItems, total, orderRef.id),
       });
       clearCart();
-    } catch {
+    } catch (submitError) {
+      console.error(submitError);
       setError(
-        "No pudimos guardar el pedido en Firebase. Podes enviarlo por WhatsApp o email con los botones de abajo."
+        `${getFirebaseErrorMessage(submitError)} Podes enviarlo por WhatsApp o email con los botones de abajo.`
       );
     } finally {
       setSaving(false);

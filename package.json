@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "firebase:login": "firebase login",
+    "firebase:deploy-rules": "firebase deploy --only firestore:rules,storage --project wavy-carpets"
   },
   "dependencies": {
     "@emotion/styled": "^11.14.0",

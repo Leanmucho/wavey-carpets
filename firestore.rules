@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasRequiredProductFields() {
+      return request.resource.data.name is string
+        && request.resource.data.description is string
+        && request.resource.data.price is number
+        && request.resource.data.images is list
+        && request.resource.data.image is string;
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update: if signedIn() && hasRequiredProductFields();
+      allow delete: if signedIn();
+    }
+
+    match /orders/{orderId} {
+      allow create: if request.resource.data.customer.name is string
+        && request.resource.data.customer.email is string
+        && request.resource.data.customer.phone is string
+        && request.resource.data.items is list
+        && request.resource.data.total is number;
+      allow read, update, delete: if signedIn();
+    }
+
+    match /customOrders/{requestId} {
+      allow create: if request.resource.data.customer.name is string
+        && request.resource.data.customer.email is string
+        && request.resource.data.customer.phone is string
+        && request.resource.data.design is string
+        && request.resource.data.imageUrl is string;
+      allow read, update, delete: if signedIn();
+    }
+  }
+}

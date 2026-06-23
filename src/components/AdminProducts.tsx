@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { db, storage } from "../firebaseConfig";
 import { useAuth } from "../context/useAuth";
 import { retroPalette } from "../style/theme";
+import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
 const initialForm = {
   name: "",
@@ -117,8 +118,9 @@ const AdminProducts = () => {
       setForm(initialForm);
       setFiles([]);
       setMessage("Producto cargado correctamente.");
-    } catch {
-      setError("No se pudo cargar el producto. Revisa permisos de Firebase.");
+    } catch (submitError) {
+      console.error(submitError);
+      setError(getFirebaseErrorMessage(submitError));
     } finally {
       setSaving(false);
     }
