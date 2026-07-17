@@ -52,7 +52,7 @@ const FooterPage = () => {
             </Typography>
             <Typography>Lunes a viernes: 9 a 18 hs</Typography>
             <Typography>Sabado: 10 a 14 hs</Typography>
-            <Typography>Bariloche, Argentina</Typography>
+            <Typography>General Rodríguez, Argentina</Typography>
           </Grid>
         </Grid>
 

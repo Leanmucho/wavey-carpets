@@ -1,6 +1,10 @@
-import { Box, Button, Card, CardContent, CardMedia, Container, Grid, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Alert, Box, Button, Card, CardContent, CardMedia, CircularProgress, Container, Grid, Typography } from "@mui/material";
+import { collection, getDocs } from "firebase/firestore";
 import { useLocation, useNavigate } from "react-router-dom";
-import { products } from "../data/products";
+import { db } from "../firebaseConfig";
+import type { Product } from "../types";
+import { normalizeProduct } from "../utils/productMapper";
 import { retroPalette } from "../style/theme";
 
 const useQuery = () => new URLSearchParams(useLocation().search);
@@ -8,6 +12,9 @@ const useQuery = () => new URLSearchParams(useLocation().search);
 const SearchResults = () => {
   const query = useQuery();
   const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const searchTerm = query.get("q")?.trim() ?? "";
   const normalizedSearch = searchTerm.toLowerCase();
   const results = products.filter((product) =>
@@ -16,6 +23,23 @@ const SearchResults = () => {
       .toLowerCase()
       .includes(normalizedSearch)
   );
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "products"));
+        setProducts(snapshot.docs.map((productDoc) =>
+          normalizeProduct(productDoc.id, productDoc.data())
+        ));
+      } catch {
+        setLoadError("No pudimos cargar los productos para realizar la búsqueda.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchProducts();
+  }, []);
 
   return (
     <Box component="main" sx={{ minHeight: "80vh", pt: { xs: 14, md: 16 }, pb: 8 }}>
@@ -27,7 +51,14 @@ const SearchResults = () => {
           Resultados para "{searchTerm}"
         </Typography>
 
-        <Grid container spacing={3}>
+        {loading && (
+          <Box sx={{ minHeight: 240, display: "grid", placeItems: "center" }}>
+            <CircularProgress aria-label="Cargando productos" />
+          </Box>
+        )}
+        {loadError && <Alert severity="error">{loadError}</Alert>}
+
+        {!loading && !loadError && <Grid container spacing={3}>
           {results.map((product) => (
             <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
               <Card sx={{ overflow: "hidden", height: "100%" }}>
@@ -49,9 +80,9 @@ const SearchResults = () => {
               </Card>
             </Grid>
           ))}
-        </Grid>
+        </Grid>}
 
-        {results.length === 0 && (
+        {!loading && !loadError && results.length === 0 && (
           <Box sx={{ p: 4, bgcolor: "background.paper", border: `2px solid ${retroPalette.border}` }}>
             <Typography variant="h5">No encontramos productos con ese texto.</Typography>
           </Box>
