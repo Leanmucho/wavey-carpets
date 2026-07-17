@@ -1,4 +1,3 @@
-import { products as fallbackProducts } from "../data/products";
 import type { Product } from "../types";
 
 type FirebaseProduct = Partial<Omit<Product, "id">> & {
@@ -18,30 +17,29 @@ const getStringArray = (value: unknown) =>
     : [];
 
 export const normalizeProduct = (id: string, data: FirebaseProduct): Product => {
-  const fallback = fallbackProducts.find((product) => product.id === id) ?? fallbackProducts[0];
   const images = getStringArray(data.images);
-  const image = getString(data.image, images[0] ?? fallback.image);
-  const width = getString(data.width, fallback.width ?? "");
-  const height = getString(data.height, fallback.height ?? "");
+  const image = getString(data.image, images[0] ?? "");
+  const width = getString(data.width, "");
+  const height = getString(data.height, "");
 
   return {
     id,
-    name: getString(data.name, fallback.name),
+    name: getString(data.name, "Producto sin nombre"),
     image,
     images: images.length > 0 ? images : [image],
-    description: getString(data.description, fallback.description),
-    price: getNumber(data.price, fallback.price),
-    oldPrice: typeof data.oldPrice === "number" ? data.oldPrice : fallback.oldPrice,
-    rating: getNumber(data.rating, fallback.rating),
-    isNew: typeof data.isNew === "boolean" ? data.isNew : fallback.isNew,
-    isSale: typeof data.isSale === "boolean" ? data.isSale : fallback.isSale,
-    colors: getStringArray(data.colors).length > 0 ? getStringArray(data.colors) : fallback.colors,
-    materials: getStringArray(data.materials).length > 0 ? getStringArray(data.materials) : fallback.materials,
-    tags: getStringArray(data.tags).length > 0 ? getStringArray(data.tags) : fallback.tags,
-    size: data.size ?? (width && height ? `${width}x${height} cm` : fallback.size),
-    origin: data.origin ?? fallback.origin,
+    description: getString(data.description, ""),
+    price: getNumber(data.price, 0),
+    oldPrice: typeof data.oldPrice === "number" ? data.oldPrice : undefined,
+    rating: getNumber(data.rating, 0),
+    isNew: typeof data.isNew === "boolean" ? data.isNew : false,
+    isSale: typeof data.isSale === "boolean" ? data.isSale : false,
+    colors: getStringArray(data.colors),
+    materials: getStringArray(data.materials),
+    tags: getStringArray(data.tags),
+    size: data.size ?? (width && height ? `${width}x${height} cm` : undefined),
+    origin: data.origin,
     width,
     height,
-    shape: getString(data.shape, fallback.shape ?? ""),
+    shape: getString(data.shape, ""),
   };
 };

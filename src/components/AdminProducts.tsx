@@ -1,20 +1,39 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
+  CardMedia,
   Checkbox,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControlLabel,
   Grid,
+  IconButton,
   LinearProgress,
   Paper,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { Close, Delete, Edit } from "@mui/icons-material";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  deleteField,
+  doc,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import { db, storage } from "../firebaseConfig";
 import { useAuth } from "../context/useAuth";
@@ -34,12 +53,44 @@ const initialForm = {
   isNew: true,
 };
 
+type ProductForm = typeof initialForm;
+
+interface AdminProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  oldPrice?: number;
+  rating: number;
+  width: string;
+  height: string;
+  shape: string;
+  materials: string[];
+  isNew: boolean;
+  image: string;
+  images: string[];
+}
+
+const getString = (value: unknown) => (typeof value === "string" ? value : "");
+const getNumber = (value: unknown, fallback = 0) =>
+  typeof value === "number" && Number.isFinite(value) ? value : fallback;
+const getStringArray = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
+
 const AdminProducts = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState<ProductForm>(initialForm);
   const [files, setFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminProduct | null>(null);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -48,18 +99,74 @@ const AdminProducts = () => {
     [files]
   );
 
-  const updateField = (field: keyof typeof initialForm, value: string | boolean) => {
+  useEffect(
+    () => () => previews.forEach((preview) => URL.revokeObjectURL(preview.url)),
+    [previews]
+  );
+
+  useEffect(() => {
+    if (!user) {
+      setLoadingProducts(false);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      collection(db, "products"),
+      (snapshot) => {
+        const items = snapshot.docs.map((productDoc) => {
+          const data = productDoc.data();
+          const images = getStringArray(data.images);
+          const image = getString(data.image) || images[0] || "";
+
+          return {
+            id: productDoc.id,
+            name: getString(data.name),
+            description: getString(data.description),
+            price: getNumber(data.price),
+            oldPrice:
+              typeof data.oldPrice === "number" && Number.isFinite(data.oldPrice)
+                ? data.oldPrice
+                : undefined,
+            rating: getNumber(data.rating, 5),
+            width: getString(data.width),
+            height: getString(data.height),
+            shape: getString(data.shape) || "rectangular",
+            materials: getStringArray(data.materials),
+            isNew: typeof data.isNew === "boolean" ? data.isNew : false,
+            image,
+            images: images.length > 0 ? images : image ? [image] : [],
+          };
+        });
+
+        setProducts(items.sort((a, b) => a.name.localeCompare(b.name, "es")));
+        setLoadingProducts(false);
+      },
+      (snapshotError) => {
+        console.error(snapshotError);
+        setError(getFirebaseErrorMessage(snapshotError));
+        setLoadingProducts(false);
+      }
+    );
+
+    return unsubscribe;
+  }, [user]);
+
+  const updateField = (field: keyof ProductForm, value: string | boolean) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const resetForm = () => {
+    setForm(initialForm);
+    setFiles([]);
+    setExistingImages([]);
+    setEditingId(null);
   };
 
   const uploadImages = async () => {
     const uploads = files.map(async (file) => {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
       const imageRef = ref(storage, `products/${Date.now()}_${safeName}`);
-      const snapshot = await uploadBytes(imageRef, file, {
-        contentType: file.type,
-      });
-
+      const snapshot = await uploadBytes(imageRef, file, { contentType: file.type });
       return getDownloadURL(snapshot.ref);
     });
 
@@ -72,12 +179,12 @@ const AdminProducts = () => {
     setMessage("");
 
     if (!user) {
-      setError("Tenes que iniciar sesion para cargar productos.");
+      setError("Tenés que iniciar sesión para administrar productos.");
       return;
     }
 
-    if (files.length === 0) {
-      setError("Agrega al menos una imagen del producto.");
+    if (existingImages.length + files.length === 0) {
+      setError("Agregá al menos una imagen del producto.");
       return;
     }
 
@@ -85,44 +192,112 @@ const AdminProducts = () => {
     const oldPrice = form.oldPrice ? Number(form.oldPrice) : undefined;
     const rating = Number(form.rating);
 
-    if (!form.name.trim() || !form.description.trim() || !Number.isFinite(price)) {
-      setError("Completa nombre, descripcion y precio.");
+    if (!form.name.trim() || !form.description.trim() || !Number.isFinite(price) || price < 0) {
+      setError("Completá nombre, descripción y un precio válido.");
+      return;
+    }
+
+    if (oldPrice !== undefined && (!Number.isFinite(oldPrice) || oldPrice < 0)) {
+      setError("El precio anterior no es válido.");
       return;
     }
 
     setSaving(true);
 
     try {
-      const imageUrls = await uploadImages();
+      const newImageUrls = await uploadImages();
+      const images = [...existingImages, ...newImageUrls];
       const materials = form.materials
         .split(",")
         .map((material) => material.trim())
         .filter(Boolean);
-
-      await addDoc(collection(db, "products"), {
+      const productData = {
         name: form.name.trim(),
         description: form.description.trim(),
         price,
-        oldPrice,
         rating: Number.isFinite(rating) ? rating : 5,
         width: form.width.trim(),
         height: form.height.trim(),
         shape: form.shape.trim() || "rectangular",
         materials,
         isNew: form.isNew,
-        images: imageUrls,
-        image: imageUrls[0],
-        createdAt: serverTimestamp(),
-      });
+        images,
+        image: images[0],
+        updatedAt: serverTimestamp(),
+      };
 
-      setForm(initialForm);
-      setFiles([]);
-      setMessage("Producto cargado correctamente.");
+      if (editingId) {
+        const previousImages = products.find((product) => product.id === editingId)?.images ?? [];
+        await updateDoc(doc(db, "products", editingId), {
+          ...productData,
+          oldPrice: oldPrice ?? deleteField(),
+        });
+        const removedImages = previousImages.filter((imageUrl) => !images.includes(imageUrl));
+        await Promise.allSettled(
+          removedImages.map((imageUrl) => deleteObject(ref(storage, imageUrl)))
+        );
+        setMessage("Producto actualizado correctamente.");
+      } else {
+        await addDoc(collection(db, "products"), {
+          ...productData,
+          ...(oldPrice !== undefined ? { oldPrice } : {}),
+          createdAt: serverTimestamp(),
+        });
+        setMessage("Producto cargado correctamente.");
+      }
+
+      resetForm();
     } catch (submitError) {
       console.error(submitError);
       setError(getFirebaseErrorMessage(submitError));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEdit = (product: AdminProduct) => {
+    setEditingId(product.id);
+    setExistingImages(product.images);
+    setFiles([]);
+    setForm({
+      name: product.name,
+      description: product.description,
+      price: String(product.price),
+      oldPrice: product.oldPrice === undefined ? "" : String(product.oldPrice),
+      rating: String(product.rating),
+      width: product.width,
+      height: product.height,
+      shape: product.shape,
+      materials: product.materials.join(", "),
+      isNew: product.isNew,
+    });
+    setError("");
+    setMessage("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async () => {
+    if (!pendingDelete || !user) return;
+
+    const product = pendingDelete;
+    setDeleting(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await deleteDoc(doc(db, "products", product.id));
+      await Promise.allSettled(
+        product.images.map((imageUrl) => deleteObject(ref(storage, imageUrl)))
+      );
+
+      if (editingId === product.id) resetForm();
+      setPendingDelete(null);
+      setMessage(`“${product.name}” fue eliminado.`);
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError(getFirebaseErrorMessage(deleteError));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -143,7 +318,7 @@ const AdminProducts = () => {
               Admin
             </Typography>
             <Typography color="text.secondary" sx={{ mb: 3 }}>
-              Inicia sesion para cargar productos en Firebase.
+              Iniciá sesión para administrar productos en Firebase.
             </Typography>
             <Button variant="contained" onClick={() => navigate("/login")}>
               Ir a login
@@ -162,7 +337,7 @@ const AdminProducts = () => {
             Admin productos
           </Typography>
           <Typography color="text.secondary">
-            Carga productos en Firestore y sube imagenes a Firebase Storage.
+            Creá, editá y eliminá los productos publicados en la tienda.
           </Typography>
         </Stack>
 
@@ -177,11 +352,29 @@ const AdminProducts = () => {
             boxShadow: "8px 8px 0 rgba(25,23,20,0.2)",
           }}
         >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
+            <Typography variant="h4" component="h2">
+              {editingId ? "Editar producto" : "Nuevo producto"}
+            </Typography>
+            {editingId && (
+              <Button variant="outlined" onClick={resetForm} disabled={saving}>
+                Cancelar edición
+              </Button>
+            )}
+          </Stack>
+
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Nombre"
                 fullWidth
+                required
                 value={form.name}
                 onChange={(event) => updateField("name", event.target.value)}
               />
@@ -191,6 +384,8 @@ const AdminProducts = () => {
                 label="Precio"
                 type="number"
                 fullWidth
+                required
+                slotProps={{ htmlInput: { min: 0, step: "any" } }}
                 value={form.price}
                 onChange={(event) => updateField("price", event.target.value)}
               />
@@ -200,14 +395,16 @@ const AdminProducts = () => {
                 label="Precio anterior"
                 type="number"
                 fullWidth
+                slotProps={{ htmlInput: { min: 0, step: "any" } }}
                 value={form.oldPrice}
                 onChange={(event) => updateField("oldPrice", event.target.value)}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
-                label="Descripcion"
+                label="Descripción"
                 fullWidth
+                required
                 multiline
                 minRows={3}
                 value={form.description}
@@ -219,6 +416,7 @@ const AdminProducts = () => {
                 label="Rating"
                 type="number"
                 fullWidth
+                slotProps={{ htmlInput: { min: 0, max: 5, step: 0.1 } }}
                 value={form.rating}
                 onChange={(event) => updateField("rating", event.target.value)}
               />
@@ -268,7 +466,7 @@ const AdminProducts = () => {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Button variant="outlined" component="label" sx={{ bgcolor: retroPalette.paper }}>
-                Seleccionar imagenes
+                Agregar imágenes
                 <input
                   hidden
                   type="file"
@@ -278,26 +476,77 @@ const AdminProducts = () => {
                 />
               </Button>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Se guarda `images` con todas las URLs y `image` con la primera para compatibilidad.
+                Podés conservar o quitar las imágenes actuales y sumar imágenes nuevas.
               </Typography>
             </Grid>
 
-            {previews.length > 0 && (
+            {(existingImages.length > 0 || previews.length > 0) && (
               <Grid size={{ xs: 12 }}>
                 <Grid container spacing={2}>
+                  {existingImages.map((imageUrl) => (
+                    <Grid key={imageUrl} size={{ xs: 6, sm: 4, md: 3 }}>
+                      <Box sx={{ position: "relative" }}>
+                        <Box
+                          component="img"
+                          src={imageUrl}
+                          alt="Imagen actual del producto"
+                          sx={{
+                            width: "100%",
+                            aspectRatio: "1",
+                            objectFit: "cover",
+                            border: `2px solid ${retroPalette.border}`,
+                          }}
+                        />
+                        <IconButton
+                          aria-label="Quitar imagen actual"
+                          onClick={() =>
+                            setExistingImages((current) =>
+                              current.filter((currentUrl) => currentUrl !== imageUrl)
+                            )
+                          }
+                          sx={{
+                            position: "absolute",
+                            top: 6,
+                            right: 6,
+                            bgcolor: retroPalette.paper,
+                            "&:hover": { bgcolor: retroPalette.cream },
+                          }}
+                        >
+                          <Close />
+                        </IconButton>
+                      </Box>
+                    </Grid>
+                  ))}
                   {previews.map((preview) => (
                     <Grid key={preview.url} size={{ xs: 6, sm: 4, md: 3 }}>
-                      <Box
-                        component="img"
-                        src={preview.url}
-                        alt={preview.file.name}
-                        sx={{
-                          width: "100%",
-                          aspectRatio: "1",
-                          objectFit: "cover",
-                          border: `2px solid ${retroPalette.border}`,
-                        }}
-                      />
+                      <Box sx={{ position: "relative" }}>
+                        <Box
+                          component="img"
+                          src={preview.url}
+                          alt={preview.file.name}
+                          sx={{
+                            width: "100%",
+                            aspectRatio: "1",
+                            objectFit: "cover",
+                            border: `2px solid ${retroPalette.border}`,
+                          }}
+                        />
+                        <IconButton
+                          aria-label={`Quitar ${preview.file.name}`}
+                          onClick={() =>
+                            setFiles((current) => current.filter((file) => file !== preview.file))
+                          }
+                          sx={{
+                            position: "absolute",
+                            top: 6,
+                            right: 6,
+                            bgcolor: retroPalette.paper,
+                            "&:hover": { bgcolor: retroPalette.cream },
+                          }}
+                        >
+                          <Close />
+                        </IconButton>
+                      </Box>
                     </Grid>
                   ))}
                 </Grid>
@@ -309,12 +558,94 @@ const AdminProducts = () => {
               {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
               {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
               <Button type="submit" variant="contained" disabled={saving}>
-                {saving ? "Cargando..." : "Guardar producto"}
+                {saving
+                  ? editingId
+                    ? "Guardando..."
+                    : "Cargando..."
+                  : editingId
+                    ? "Guardar cambios"
+                    : "Guardar producto"}
               </Button>
             </Grid>
           </Grid>
         </Paper>
+
+        <Box sx={{ mt: 7 }}>
+          <Typography variant="h3" component="h2" sx={{ mb: 1 }}>
+            Productos publicados
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            {products.length} {products.length === 1 ? "producto" : "productos"} en Firebase
+          </Typography>
+
+          {loadingProducts && <LinearProgress />}
+          {!loadingProducts && products.length === 0 && (
+            <Alert severity="info">Todavía no hay productos cargados.</Alert>
+          )}
+
+          <Grid container spacing={3}>
+            {products.map((product) => (
+              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                  <CardMedia
+                    component="img"
+                    image={product.image}
+                    alt={product.name}
+                    sx={{ aspectRatio: "4 / 3", objectFit: "cover" }}
+                  />
+                  <CardContent sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                    <Typography variant="h5" component="h3" gutterBottom>
+                      {product.name}
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ mb: 2, flex: 1 }}>
+                      {product.description}
+                    </Typography>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      ${product.price.toLocaleString("es-AR")}
+                    </Typography>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<Edit />}
+                        onClick={() => handleEdit(product)}
+                        sx={{ flex: 1, bgcolor: retroPalette.paper }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<Delete />}
+                        onClick={() => setPendingDelete(product)}
+                        sx={{ flex: 1, bgcolor: retroPalette.paper }}
+                      >
+                        Eliminar
+                      </Button>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Container>
+
+      <Dialog open={Boolean(pendingDelete)} onClose={() => !deleting && setPendingDelete(null)}>
+        <DialogTitle>Eliminar producto</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Seguro que querés eliminar “{pendingDelete?.name}”? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingDelete(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
+            {deleting ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

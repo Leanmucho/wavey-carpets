@@ -88,7 +88,7 @@ const Home = () => {
             maxWidth: 760,
           }}
         >
-          Alfombras con alma de skate viejo
+          Alfombras tufting artesanales
         </Typography>
 
         <Typography
@@ -99,7 +99,8 @@ const Home = () => {
             fontWeight: 700,
           }}
         >
-          Piezas tufting con base crema, rojo fuerte, textura artesanal y una vibra vintage que no pide permiso.
+          Piezas tufting personalizadas, hechas con hilados de lana o algodón sobre tela
+          primaria y terminadas con adhesivo de látex y respaldo protector.
         </Typography>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -118,14 +119,6 @@ const Home = () => {
             sx={{ bgcolor: retroPalette.olive, "&:hover": { bgcolor: retroPalette.olive } }}
           >
             Personalizar
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => navigate("/colecciones")}
-            sx={{ bgcolor: retroPalette.paper }}
-          >
-            Colecciones
           </Button>
         </Stack>
       </Stack>

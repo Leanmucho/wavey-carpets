@@ -14,7 +14,6 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, useParams } from "react-router-dom";
 import { db } from "../firebaseConfig";
-import { products as fallbackProducts } from "../data/products";
 import { useCart } from "../context/useCart";
 import type { Product } from "../types";
 import { retroPalette } from "../style/theme";
@@ -42,10 +41,10 @@ const ProductPage = () => {
         if (docSnap.exists()) {
           setProduct(normalizeProduct(docSnap.id, docSnap.data()));
         } else {
-          setProduct(fallbackProducts.find((item) => item.id === id) ?? null);
+          setProduct(null);
         }
       } catch {
-        setProduct(fallbackProducts.find((item) => item.id === id) ?? null);
+        setProduct(null);
       } finally {
         setLoading(false);
       }

@@ -35,7 +35,6 @@ const navItems = [
   { label: "Inicio", path: "/" },
   { label: "Productos", path: "/shop" },
   { label: "Personalizada", path: "/personalizada" },
-  { label: "Colecciones", path: "/colecciones" },
   { label: "Info", path: "/info" },
 ];
 

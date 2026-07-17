@@ -71,7 +71,7 @@ const InfoPage = () => {
           <Grid size={{ xs: 12, md: 6 }}>
             <motion.img
               src={img4}
-              alt="Taller en la Patagonia"
+              alt="Taller en General Rodríguez"
               style={{
                 width: "100%",
                 border: `3px solid ${retroPalette.border}`,
@@ -84,10 +84,10 @@ const InfoPage = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="h3" sx={{ color: retroPalette.red, mb: 2 }}>
-              Desde la Patagonia
+              Desde General Rodríguez
             </Typography>
             <Typography color="text.secondary">
-              El taller esta en Bariloche. La calma del sur y la energia de la calle se mezclan en piezas con color, textura y personalidad.
+              El taller está en General Rodríguez. El oficio artesanal y la energía de la calle se mezclan en piezas con color, textura y personalidad.
             </Typography>
           </Grid>
         </Grid>

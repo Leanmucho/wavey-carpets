@@ -4,7 +4,6 @@ import { CartProvider } from "./context/CartContext";
 import Header from "./components/Header";
 import Home from "./components/Home";
 import Shop from "./components/Shop";
-import Colecciones from "./components/Colecciones";
 import ProductPage from "./components/ProductPage";
 import Login from "./components/common/Login";
 import Register from "./components/common/Register";
@@ -70,7 +69,6 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="/colecciones" element={<Colecciones />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/buscar" element={<SearchResults />} />
