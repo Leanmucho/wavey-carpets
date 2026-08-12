@@ -103,7 +103,7 @@ const AdminProducts = () => {
         name: form.name.trim(),
         description: form.description.trim(),
         price,
-        oldPrice,
+        ...(oldPrice !== undefined ? { oldPrice } : {}),
         rating: Number.isFinite(rating) ? rating : 5,
         width: form.width.trim(),
         height: form.height.trim(),
