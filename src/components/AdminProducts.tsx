@@ -1,3 +1,4 @@
+import { invalidateCatalog } from "../utils/catalog";
 import { useMemo, useState } from "react";
 import {
   Alert,
@@ -115,6 +116,7 @@ const AdminProducts = () => {
         createdAt: serverTimestamp(),
       });
 
+      invalidateCatalog();
       setForm(initialForm);
       setFiles([]);
       setMessage("Producto cargado correctamente.");

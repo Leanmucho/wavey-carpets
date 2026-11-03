@@ -195,13 +195,13 @@ const CustomOrder = () => {
     <Box component="main" sx={{ minHeight: "100vh", pt: { xs: 14, md: 16 }, pb: 8 }}>
       <Container maxWidth="lg">
         <Grid container spacing={4} alignItems="flex-start">
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 5 }} sx={{ minWidth: 0 }}>
             <Stack spacing={2} sx={{ position: { md: "sticky" }, top: { md: 120 } }}>
               <Chip label="Tu diseño, a medida" color="primary" sx={{ width: "fit-content" }} />
               <Typography
                 variant="h2"
                 component="h1"
-                sx={{ fontFamily: "'Archivo Black', 'Work Sans', sans-serif", lineHeight: 0.95 }}
+                sx={{ fontFamily: "'Archivo Black', 'Work Sans', sans-serif", fontSize: { xs: "clamp(1.8rem, 7.5vw, 2.6rem)", md: "clamp(1.8rem, 3vw, 2.6rem)" }, lineHeight: 1.08, overflowWrap: "anywhere", maxWidth: "100%" }}
               >
                 Tu alfombra personalizada
               </Typography>

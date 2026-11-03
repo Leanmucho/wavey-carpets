@@ -14,7 +14,6 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate, useParams } from "react-router-dom";
 import { db } from "../firebaseConfig";
-import { products as fallbackProducts } from "../data/products";
 import { useCart } from "../context/useCart";
 import type { Product } from "../types";
 import { retroPalette } from "../style/theme";
@@ -28,6 +27,9 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setProduct(null);
     const fetchProduct = async () => {
       if (!id) {
         setProduct(null);
@@ -39,19 +41,21 @@ const ProductPage = () => {
         const docRef = doc(db, "products", id);
         const docSnap = await getDoc(docRef);
 
+        if (!active) return;
         if (docSnap.exists()) {
           setProduct(normalizeProduct(docSnap.id, docSnap.data()));
         } else {
-          setProduct(fallbackProducts.find((item) => item.id === id) ?? null);
+          setProduct(null);
         }
       } catch {
-        setProduct(fallbackProducts.find((item) => item.id === id) ?? null);
+        if (active) setProduct(null);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     void fetchProduct();
+    return () => { active = false; };
   }, [id]);
 
   if (loading) {

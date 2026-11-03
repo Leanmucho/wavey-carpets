@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -18,6 +18,8 @@ import {
   MenuItem,
   Pagination,
   Select,
+  Skeleton,
+  Alert,
   Stack,
   Typography,
 } from "@mui/material";
@@ -29,51 +31,24 @@ import {
   ViewList,
   ViewModule,
 } from "@mui/icons-material";
-import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebaseConfig";
-import { products as fallbackProducts } from "../data/products";
 import { useCart } from "../context/useCart";
-import type { Product } from "../types";
 import { retroPalette } from "../style/theme";
-import { normalizeProduct } from "../utils/productMapper";
+
+import { useCatalog } from "../context/useCatalog";
 
 const itemsPerPage = 8;
 
 const Shop = () => {
   const navigate = useNavigate();
   const { addItemToCart } = useCart();
-  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const { products, loading, error, retry } = useCatalog();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOption, setSortOption] = useState("featured");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loadMessage, setLoadMessage] = useState("");
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "products"));
-        const items = querySnapshot.docs.map((doc) =>
-          normalizeProduct(doc.id, doc.data())
-        );
-
-        if (items.length > 0) {
-          setProducts(items);
-          setLoadMessage("");
-        } else {
-          setLoadMessage("Este es un catálogo de muestra. Consultá los diseños disponibles antes de elegir.");
-        }
-      } catch {
-        setLoadMessage("No pudimos cargar el catálogo actualizado. Estos diseños son de muestra.");
-      }
-    };
-
-    void fetchProducts();
-  }, []);
-
   const allMaterials = useMemo(
     () => Array.from(new Set(products.flatMap((product) => product.materials))),
     [products]
@@ -154,11 +129,6 @@ const Shop = () => {
             <Typography variant="h6" color="text.secondary" sx={{ mt: 2, maxWidth: 620 }}>
               Explorá alfombras hechas a mano con técnica tufting. Diseños, formas y colores para darle calidez y personalidad a tu espacio.
             </Typography>
-            {loadMessage && (
-              <Typography variant="body2" sx={{ mt: 2, fontWeight: 800, color: retroPalette.red }}>
-                {loadMessage}
-              </Typography>
-            )}
           </Box>
 
           <Box
@@ -218,8 +188,11 @@ const Shop = () => {
           </FormControl>
         </Stack>
 
-        <Grid container spacing={4}>
-          {paginatedProducts.map((product) => (
+        {loading && <Box role="status" aria-label="Cargando alfombras" aria-live="polite"><Typography sx={{ mb: 2 }}>Cargando alfombras…</Typography><Grid container spacing={4}>{Array.from({ length: 8 }, (_, index) => <Grid key={index} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}><Skeleton variant="rectangular" height={250} /><Skeleton height={40} /><Skeleton width="65%" height={28} /></Grid>)}</Grid></Box>}
+        {!loading && error && <Alert severity="warning" action={<Button color="inherit" onClick={retry}>Reintentar</Button>}>No pudimos cargar las alfombras. Intentá nuevamente.</Alert>}
+        {!loading && !error && sortedProducts.length === 0 && <Typography role="status">{products.length ? "No hay alfombras con estos filtros." : "Todavía no hay alfombras publicadas. Podés solicitar un diseño a medida."}</Typography>}
+        <Grid container spacing={4} aria-busy={loading}>
+          {!loading && paginatedProducts.map((product) => (
             <Grid
               key={product.id}
               size={{
@@ -316,13 +289,13 @@ const Shop = () => {
           ))}
         </Grid>
 
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
+        {!loading && !error && sortedProducts.length > 0 && <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
           <Pagination
             count={pageCount}
             page={currentPage}
             onChange={(_event, value) => setCurrentPage(value)}
           />
-        </Box>
+        </Box>}
       </Container>
 
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>

@@ -1,4 +1,3 @@
-import { products as fallbackProducts } from "../data/products";
 import type { Product } from "../types";
 
 type FirebaseProduct = Partial<Omit<Product, "id">> & {
@@ -18,7 +17,7 @@ const getStringArray = (value: unknown) =>
     : [];
 
 export const normalizeProduct = (id: string, data: FirebaseProduct): Product => {
-  const fallback = fallbackProducts.find((product) => product.id === id) ?? fallbackProducts[0];
+  const fallback: Product = { id, name: "Alfombra", image: `${import.meta.env.BASE_URL}product-placeholder.svg`, description: "", price: 0, rating: 0, materials: [] };
   const images = getStringArray(data.images);
   const image = getString(data.image, images[0] ?? fallback.image);
   const width = getString(data.width, fallback.width ?? "");
