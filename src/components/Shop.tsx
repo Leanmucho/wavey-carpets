@@ -64,10 +64,10 @@ const Shop = () => {
           setProducts(items);
           setLoadMessage("");
         } else {
-          setLoadMessage("Mostrando catalogo de ejemplo hasta cargar Firebase.");
+          setLoadMessage("Este es un catálogo de muestra. Consultá los diseños disponibles antes de elegir.");
         }
       } catch {
-        setLoadMessage("Firebase no respondio; mostrando catalogo de ejemplo.");
+        setLoadMessage("No pudimos cargar el catálogo actualizado. Estos diseños son de muestra.");
       }
     };
 
@@ -139,7 +139,7 @@ const Shop = () => {
           }}
         >
           <Box>
-            <Chip label="Catalogo" color="primary" sx={{ mb: 2 }} />
+            <Chip label="Catálogo de alfombras" color="primary" sx={{ mb: 2 }} />
             <Typography
               variant="h2"
               component="h1"
@@ -149,10 +149,10 @@ const Shop = () => {
                 lineHeight: 0.95,
               }}
             >
-              Nuestra tienda
+              Alfombras de diseño
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ mt: 2, maxWidth: 620 }}>
-              Alfombras tufting hechas a mano con textura, color y actitud de vereda.
+              Explorá alfombras hechas a mano con técnica tufting. Diseños, formas y colores para darle calidez y personalidad a tu espacio.
             </Typography>
             {loadMessage && (
               <Typography variant="body2" sx={{ mt: 2, fontWeight: 800, color: retroPalette.red }}>
@@ -213,7 +213,7 @@ const Shop = () => {
               <MenuItem value="price-asc">Precio: menor a mayor</MenuItem>
               <MenuItem value="price-desc">Precio: mayor a menor</MenuItem>
               <MenuItem value="rating">Mejor valorados</MenuItem>
-              <MenuItem value="newest">Mas nuevos</MenuItem>
+              <MenuItem value="newest">Más nuevos</MenuItem>
             </Select>
           </FormControl>
         </Stack>

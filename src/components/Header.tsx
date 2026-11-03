@@ -24,7 +24,7 @@ import {
   ShoppingBag,
 } from "@mui/icons-material";
 import { signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/wavyCarpetPNG.png";
 import { auth } from "../firebaseConfig";
 import { useAuth } from "../context/useAuth";
@@ -33,10 +33,10 @@ import { retroPalette } from "../style/theme";
 
 const navItems = [
   { label: "Inicio", path: "/" },
-  { label: "Productos", path: "/shop" },
-  { label: "Personalizada", path: "/personalizada" },
+  { label: "Alfombras", path: "/shop" },
+  { label: "A tu medida", path: "/personalizada" },
   { label: "Colecciones", path: "/colecciones" },
-  { label: "Info", path: "/info" },
+  { label: "El taller", path: "/info" },
 ];
 
 const Header = () => {
@@ -79,6 +79,8 @@ const Header = () => {
       {navItems.map((item) => (
         <Button
           key={item.path}
+          component={Link}
+          to={item.path}
           color="inherit"
           onClick={() => goTo(item.path)}
           sx={{
@@ -113,7 +115,7 @@ const Header = () => {
     >
       <Toolbar sx={{ minHeight: 76, gap: 2 }}>
         {isMobile && (
-          <IconButton onClick={() => setMobileOpen(true)} aria-label="Abrir menu">
+          <IconButton onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
             <MenuIcon />
           </IconButton>
         )}
@@ -183,7 +185,7 @@ const Header = () => {
         {cartItems.length === 0
           ? [
               <MenuItem key="empty" disabled>
-                Tu carrito esta vacio
+                Tu carrito está vacío
               </MenuItem>,
             ]
           : cartItems.slice(0, 4).map((item) => (
@@ -220,15 +222,15 @@ const Header = () => {
               </MenuItem>,
               <Divider key="divider" />,
               <MenuItem key="logout" onClick={handleLogout}>
-                Cerrar sesion
+                Cerrar sesión
               </MenuItem>,
             ]
           : [
               <MenuItem key="login" onClick={() => goTo("/login")}>
-                Login
+                Iniciar sesión
               </MenuItem>,
               <MenuItem key="register" onClick={() => goTo("/register")}>
-                Register
+                Crear cuenta
               </MenuItem>,
             ]}
       </Menu>
@@ -237,7 +239,7 @@ const Header = () => {
         <Box sx={{ width: 280, p: 2, bgcolor: retroPalette.cream, height: "100%" }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
             <Box component="img" src={logo} alt="Wavy Carpets" sx={{ height: 54 }} />
-            <IconButton onClick={() => setMobileOpen(false)} aria-label="Cerrar menu">
+            <IconButton onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
               <Close />
             </IconButton>
           </Stack>

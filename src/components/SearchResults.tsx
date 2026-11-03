@@ -21,7 +21,7 @@ const SearchResults = () => {
     <Box component="main" sx={{ minHeight: "80vh", pt: { xs: 14, md: 16 }, pb: 8 }}>
       <Container maxWidth="lg">
         <Typography variant="h2" component="h1" gutterBottom>
-          Busqueda
+          Buscá tu alfombra
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 4 }}>
           Resultados para "{searchTerm}"

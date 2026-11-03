@@ -1,54 +1,29 @@
-# React + TypeScript + Vite
+# Wavy Carpets
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tienda React + TypeScript + Vite, con Firebase y publicación existente en GitHub Pages. Mantiene la paleta crema, rojo, mostaza y oliva y la tipografía original.
 
-Currently, two official plugins are available:
+## Desarrollo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- `npm ci`
+- `npm run dev -- --host 127.0.0.1`
+- `npm run build` (TypeScript + Vite)
 
-## Expanding the ESLint configuration
+Los pushes a `main` ejecutan `.github/workflows/deploy-pages.yml`. El sitio se sirve bajo `/wavey-carpets/`. No cambiar esta base sin actualizar los metadatos y el sitemap.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Textos y SEO (noviembre de 2026)
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+La portada, la tienda, el taller y la solicitud explican el producto y el proceso. Se priorizaron las expresiones **alfombras personalizadas**, **alfombras hechas a mano**, **alfombras de diseño**, **tufting artesanal** y **alfombras a medida**. Son términos observados en páginas del rubro, no datos medidos de volumen ni una garantía de ranking:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- https://cruxtuft.com.ar/
+- https://www.reptarrugs.com.ar/alfombras-personalizadas/
+- https://bairesrugs.com/
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Se reemplazó el título de Vite por metadatos de marca, descripción, idioma español, canonical, Open Graph, icono y JSON-LD de Organization. El sitemap enumera solo la portada: las rutas de HashRouter no son páginas indexables independientes. Una futura migración a rutas reales y prerenderizado/SSR permitiría trabajar SEO individual de categorías y productos. No se atribuyeron reseñas, plazos ni materiales no confirmados en el marcado.
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Movimiento vintage
+
+Galería con fundido entre fotos, postal inclinada, sello oscilante, estrella rotativa, cinta horizontal y tarjetas con respuesta al hover. Hay controles de foto y pausa; se respeta `prefers-reduced-motion` y el cambio automático se suspende cuando la pestaña está oculta. Las preguntas frecuentes usan `details` nativo.
+
+## Contacto y catálogo
+
+El formulario existente guarda solicitudes en Firebase. No probarlo enviando datos ficticios a producción. El WhatsApp de ejemplo `1234567890` se retiró del flujo: solo se muestra si se configura `VITE_WHATSAPP_PHONE` con el número real en formato internacional, sin signos. También se retiraron redes genéricas, email y horarios de ejemplo del pie. Las colecciones se presentan como inspiración, sin precios ni valoraciones inventados. El catálogo de productos conserva su fallback de muestra y lo señala cuando no hay datos de Firebase.

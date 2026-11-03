@@ -16,10 +16,10 @@ const InfoPage = () => {
             component="h1"
             sx={{ fontFamily: "'Archivo Black', 'Work Sans', sans-serif" }}
           >
-            Nosotros
+            El taller de Wavy
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 760 }}>
-            Fabricamos alfombras con tecnica tufting, mezcla de oficio artesanal y grafica urbana. Cada pieza nace desde cero y busca transformar un espacio sin hacerlo solemne.
+            En Wavy Carpets creamos alfombras hechas a mano con técnica tufting. Nos gustan las formas libres, los colores con carácter y los detalles que hacen que una casa se sienta propia.
           </Typography>
         </Stack>
 
@@ -48,7 +48,7 @@ const InfoPage = () => {
               Detalles
             </Typography>
             <Typography color="text.secondary">
-              El reverso tambien importa: define durabilidad, caida y comodidad. Usamos materiales pensados para que la alfombra se vea fuerte y se sienta bien todos los dias.
+              Una alfombra es más que su dibujo. La textura, el recorte y las terminaciones forman parte del trabajo artesanal que le da carácter a cada pieza.
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
@@ -87,7 +87,7 @@ const InfoPage = () => {
               Desde la Patagonia
             </Typography>
             <Typography color="text.secondary">
-              El taller esta en Bariloche. La calma del sur y la energia de la calle se mezclan en piezas con color, textura y personalidad.
+              Desde nuestro taller en Bariloche, Argentina, combinamos el oficio del tufting con una mirada propia del diseño. Referencias vintage, color y texturas para acompañar tu espacio.
             </Typography>
           </Grid>
         </Grid>

@@ -22,7 +22,8 @@ import { db, storage } from "../firebaseConfig";
 import { retroPalette } from "../style/theme";
 import { getFirebaseErrorMessage } from "../utils/firebaseError";
 
-const WHATSAPP_PHONE = "1234567890";
+const WHATSAPP_PHONE = import.meta.env.VITE_WHATSAPP_PHONE?.replace(/\D/g, "") ?? "";
+const hasWhatsApp = /^[1-9]\d{9,14}$/.test(WHATSAPP_PHONE) && WHATSAPP_PHONE !== "1234567890";
 
 const shapeLabels = {
   rectangular: "Rectangular",
@@ -65,13 +66,13 @@ const buildWhatsAppMessage = (
     requestId ? `Solicitud: ${requestId}` : "",
     `Nombre: ${form.name}`,
     `Email: ${form.email}`,
-    `Telefono: ${form.phone}`,
+    `Teléfono: ${form.phone}`,
     `Forma: ${shapeLabels[form.shape]}`,
     `Medidas: ${form.width} x ${form.height} cm`,
     form.colors ? `Colores: ${form.colors}` : "",
     form.budget ? `Presupuesto aproximado: ${form.budget}` : "",
     form.deadline ? `Fecha ideal: ${form.deadline}` : "",
-    `Diseno: ${form.design}`,
+    `Diseño: ${form.design}`,
     imageUrl ? `Imagen de referencia: ${imageUrl}` : "Adjunto la imagen de referencia por WhatsApp.",
   ]
     .filter(Boolean)
@@ -118,13 +119,13 @@ const CustomOrder = () => {
   };
 
   const validate = () => {
-    if (!form.name.trim()) return "Completa tu nombre.";
-    if (!form.email.trim()) return "Completa tu email.";
-    if (!form.phone.trim()) return "Completa tu telefono.";
-    if (!form.width.trim()) return "Indica el ancho.";
-    if (!form.height.trim()) return "Indica el alto.";
-    if (!form.design.trim()) return "Conta como queres el diseno.";
-    if (!file) return "Subi una imagen de referencia.";
+    if (!form.name.trim()) return "Completá tu nombre.";
+    if (!form.email.trim()) return "Completá tu email.";
+    if (!form.phone.trim()) return "Completá tu teléfono.";
+    if (!form.width.trim()) return "Indicá el ancho en centímetros.";
+    if (!form.height.trim()) return "Indicá el alto en centímetros.";
+    if (!form.design.trim()) return "Contanos cómo querés el diseño.";
+    if (!file) return "Subí una imagen de referencia.";
     return "";
   };
 
@@ -175,14 +176,14 @@ const CustomOrder = () => {
         createdAt: serverTimestamp(),
       });
 
-      setSuccess("Solicitud enviada. Te recomendamos mandarla por WhatsApp para coordinar mas rapido.");
+      setSuccess("Recibimos tu idea. Vamos a revisar el diseño y los datos para preparar tu presupuesto.");
       setWhatsappUrl(buildWhatsAppUrl(form, imageUrl, requestRef.id));
       setForm(initialForm);
       setFile(null);
     } catch (submitError) {
       console.error(submitError);
       setError(
-        `${getFirebaseErrorMessage(submitError)} Podes mandarla por WhatsApp y adjuntar la imagen manualmente.`
+        `${getFirebaseErrorMessage(submitError)} Revisá los datos e intentá nuevamente en unos minutos.`
       );
       setWhatsappUrl(buildWhatsAppUrl(form));
     } finally {
@@ -196,16 +197,16 @@ const CustomOrder = () => {
         <Grid container spacing={4} alignItems="flex-start">
           <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={2} sx={{ position: { md: "sticky" }, top: { md: 120 } }}>
-              <Chip label="Pedido custom" color="primary" sx={{ width: "fit-content" }} />
+              <Chip label="Tu diseño, a medida" color="primary" sx={{ width: "fit-content" }} />
               <Typography
                 variant="h2"
                 component="h1"
                 sx={{ fontFamily: "'Archivo Black', 'Work Sans', sans-serif", lineHeight: 0.95 }}
               >
-                Tu imagen hecha alfombra
+                Tu alfombra personalizada
               </Typography>
               <Typography color="text.secondary">
-                Sube una referencia, elegi la forma, medidas y contanos como queres el diseno. Nosotros lo revisamos y te respondemos con presupuesto.
+                Subí una imagen de referencia y contanos las medidas, la forma y los colores que imaginás. Revisamos tu diseño y te respondemos con un presupuesto a medida.
               </Typography>
 
               <Paper
@@ -282,7 +283,7 @@ const CustomOrder = () => {
                   </Grid>
                   <Grid size={{ xs: 12 }}>
                     <TextField
-                      label="Telefono"
+                      label="Teléfono"
                       fullWidth
                       value={form.phone}
                       onChange={(event) => updateField("phone", event.target.value)}
@@ -362,7 +363,7 @@ const CustomOrder = () => {
                   </Grid>
                   <Grid size={{ xs: 12 }}>
                     <TextField
-                      label="Como queres el diseno?"
+                      label="¿Cómo imaginás tu alfombra?"
                       fullWidth
                       multiline
                       minRows={5}
@@ -376,16 +377,16 @@ const CustomOrder = () => {
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <Button type="submit" variant="contained" disabled={saving}>
-                    {saving ? "Enviando..." : "Enviar solicitud"}
+                    {saving ? "Enviando..." : "Solicitar presupuesto"}
                   </Button>
-                  <Button
+                  {hasWhatsApp && <Button
                     variant="outlined"
                     href={whatsappUrl}
                     target="_blank"
                     sx={{ bgcolor: retroPalette.paper }}
                   >
                     Consultar por WhatsApp
-                  </Button>
+                  </Button>}
                 </Stack>
               </Stack>
             </Paper>
